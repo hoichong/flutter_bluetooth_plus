@@ -1,0 +1,22 @@
+name: flutter_bluetooth_plus_example
+description: Demonstrates how to use the flutter_bluetooth_plus plugin.
+publish_to: 'none'
+
+environment:
+  sdk: ">=2.1.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^0.1.2
+  path_provider: ^1.4.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_bluetooth_plus:
+    path: ../
+
+flutter:
+  uses-material-design: true
