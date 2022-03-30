@@ -100,7 +100,8 @@ public class FlutterBluetoothBasicPlugin implements MethodCallHandler, RequestPe
           pendingResult = result;
           break;
         }
-        startScan(call, result);
+        //startScan(call, result); do not do any scan for the case of virtual bluetooth printer
+        getOnlyBondedDevices2(result); //only use bonded bt devices
         break;
       }
       case "stopScan":
@@ -126,7 +127,7 @@ public class FlutterBluetoothBasicPlugin implements MethodCallHandler, RequestPe
 
   }
 
-  /* private void getDevices(Result result){
+  private void getDevices(Result result){
     List<Map<String, Object>> devices = new ArrayList<>();
     for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
       Map<String, Object> ret = new HashMap<>();
@@ -137,9 +138,20 @@ public class FlutterBluetoothBasicPlugin implements MethodCallHandler, RequestPe
     }
 
     result.success(devices);
-  } */
+  }
 
-  private void getDevices(Result result){
+  private void getOnlyBondedDevices2(Result result) {
+    List<Map<String, Object>> devices = new ArrayList<>();
+    for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
+
+      if(device != null && device.getName() != null){
+        invokeMethodUIThread("ScanResult", device);
+      }
+    }
+    result.success(null);
+  }
+
+  /* private void getDevices(Result result){
     
     List<Map<String, Object>> devices = new ArrayList<>();
     //Default Bluetooth adapter
@@ -155,7 +167,7 @@ public class FlutterBluetoothBasicPlugin implements MethodCallHandler, RequestPe
       devices.add(ret);
     }
     result.success(devices);
-  }
+  } */
 
 
   private void state(Result result){
@@ -213,6 +225,7 @@ public class FlutterBluetoothBasicPlugin implements MethodCallHandler, RequestPe
     @Override
     public void onScanResult(int callbackType, ScanResult result) {
       BluetoothDevice device = result.getDevice();
+
       if(device != null && device.getName() != null){
         invokeMethodUIThread("ScanResult", device);
       }
