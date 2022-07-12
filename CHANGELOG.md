@@ -1,3 +1,7 @@
+## 0.1.16
+
+- Enhance the bluetooth printer detection via getBondedDevices() instead of BluetoothLeScanner scanner  to scan for BT printers
+
 ## 0.1.15
 
 - Change the bluetooth printer detection via getBondedDevices() instead of BluetoothLeScanner scanner  to scan for BT printers

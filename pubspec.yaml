@@ -1,6 +1,6 @@
 name: flutter_bluetooth_plus
 description: Flutter plugin that allows to find bluetooth devices & send raw bytes data
-version: 0.1.15
+version: 0.1.16
 homepage: https://github.com/hoichong/flutter_bluetooth_plus
 
 environment:
