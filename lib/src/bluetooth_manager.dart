@@ -124,6 +124,51 @@ class BluetoothManager {
     _isScanning.add(false);
   }
 
+  Future<dynamic> getDefault()  async {
+    await  getDefaultDevice().drain();
+    return _scanResults.value;
+  }
+  /// => _channel.invokeMethod('getDefault');
+
+  Stream<BluetoothDevice> getDefaultDevice() async* {
+    if (_isScanning.value == true) {
+      throw Exception('Another scan is already in progress.');
+    }
+
+    // Clear scan results list
+    _scanResults.add(<BluetoothDevice>[]);
+
+    try {
+      _channel.invokeMethod('getDefault');
+    } catch (e) {
+      print('Error starting scan.');
+      throw e;
+    }
+
+    yield* BluetoothManager.instance._methodStream
+        .where((m) => m.method == "ScanResult")
+        .map((m) => m.arguments)
+        .doOnDone(stopScan)
+        .map((map) {
+      final device = BluetoothDevice.fromJson(Map<String, dynamic>.from(map));
+      final List<BluetoothDevice>? list = _scanResults.value;
+      int newIndex = -1;
+      list!.asMap().forEach((index, e) {
+        if (e.address == device.address) {
+          newIndex = index;
+        }
+      });
+
+      if (newIndex != -1) {
+        list[newIndex] = device;
+      } else {
+        list.add(device);
+      }
+      _scanResults.add(list);
+      return device;
+    });
+  }
+
   Future<dynamic> connect(BluetoothDevice device) =>
       _channel.invokeMethod('connect', device.toJson());
 

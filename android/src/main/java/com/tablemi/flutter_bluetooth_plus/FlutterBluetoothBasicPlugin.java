@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.Set;
 
+import android.os.Build;
+
 /** FlutterBluetoothBasicPlugin */
 public class FlutterBluetoothBasicPlugin implements MethodCallHandler, RequestPermissionsResultListener {
   private static final String TAG = "BluetoothBasicPlugin";
@@ -45,7 +47,7 @@ public class FlutterBluetoothBasicPlugin implements MethodCallHandler, RequestPe
   private final Activity activity;
   private final MethodChannel channel;
   private final EventChannel stateChannel;
-  private final BluetoothManager mBluetoothManager;
+  private final BluetoothManager mBluetoothManager;;
   private BluetoothAdapter mBluetoothAdapter;
 
   private MethodCall pendingCall;
@@ -62,6 +64,7 @@ public class FlutterBluetoothBasicPlugin implements MethodCallHandler, RequestPe
     this.channel = new MethodChannel(registrar.messenger(), NAMESPACE + "/methods");
     this.stateChannel = new EventChannel(registrar.messenger(), NAMESPACE + "/state");
     this.mBluetoothManager = (BluetoothManager) registrar.activity().getSystemService(Context.BLUETOOTH_SERVICE);
+
     this.mBluetoothAdapter = mBluetoothManager.getAdapter();
     channel.setMethodCallHandler(this);
     stateChannel.setStreamHandler(stateStreamHandler);
@@ -100,8 +103,7 @@ public class FlutterBluetoothBasicPlugin implements MethodCallHandler, RequestPe
           pendingResult = result;
           break;
         }
-        //startScan(call, result); do not do any scan for the case of virtual bluetooth printer
-        getOnlyBondedDevices2(result); //only use bonded bt devices
+        startScan(call, result); 
         break;
       }
       case "stopScan":
@@ -120,6 +122,9 @@ public class FlutterBluetoothBasicPlugin implements MethodCallHandler, RequestPe
       case "writeData":
         writeData(result, args);
         break;
+      case "getDefault":
+        getDevices();
+        break;
       default:
         result.notImplemented();
         break;
@@ -127,7 +132,7 @@ public class FlutterBluetoothBasicPlugin implements MethodCallHandler, RequestPe
 
   }
 
-  private void getDevices(Result result){
+  /* private void getDevices(Result result){
     List<Map<String, Object>> devices = new ArrayList<>();
     for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
       Map<String, Object> ret = new HashMap<>();
@@ -138,36 +143,33 @@ public class FlutterBluetoothBasicPlugin implements MethodCallHandler, RequestPe
     }
 
     result.success(devices);
-  }
+  } */
 
-  private void getOnlyBondedDevices2(Result result) {
-    List<Map<String, Object>> devices = new ArrayList<>();
-    for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
+  private void getDevices(){
 
-      if(device != null && device.getName() != null){
-        invokeMethodUIThread("ScanResult", device);
-      }
-    }
-    result.success(null);
-  }
-
-  /* private void getDevices(Result result){
-    
     List<Map<String, Object>> devices = new ArrayList<>();
     //Default Bluetooth adapter
     BluetoothAdapter mBtAdapter = BluetoothAdapter.getDefaultAdapter();
     //Gets the current bluetooth device that has been paired
     Set<BluetoothDevice> pairedDevices = mBtAdapter.getBondedDevices();
 
-    for (BluetoothDevice device : pairedDevices)  {
-      Map<String, Object> ret = new HashMap<>();
-      ret.put("address", device.getAddress());
-      ret.put("name", device.getName());
-      ret.put("type", device.getType());
-      devices.add(ret);
+    for (BluetoothDevice device1 : pairedDevices)  {
+      final Map<String, Object> ret1 = new HashMap<>();
+      ret1.put("address", device1.getAddress());
+      ret1.put("name", device1.getName());
+      ret1.put("type", device1.getType());
+      devices.add(ret1);
+      Log.d(TAG,"invokeMethodUIThread run=== "+ ret1.toString());
+      activity.runOnUiThread(
+              new Runnable() {
+                @Override
+                public void run() {
+                  Log.d(TAG,"invokeMethodUIThread run=== "+ ret1.toString());
+                  channel.invokeMethod("ScanResult", ret1);
+      }
+              });
     }
-    result.success(devices);
-  } */
+  }
 
 
   private void state(Result result){
@@ -196,8 +198,6 @@ public class FlutterBluetoothBasicPlugin implements MethodCallHandler, RequestPe
   }
 
   private void startScan(MethodCall call, Result result) {
-    Log.d(TAG,"start scan ");
-
     try {
       startScan();
       result.success(null);
@@ -219,13 +219,12 @@ public class FlutterBluetoothBasicPlugin implements MethodCallHandler, RequestPe
                 channel.invokeMethod(name, ret);
               }
             });
-  }
+  }  
 
   private ScanCallback mScanCallback = new ScanCallback() {
     @Override
     public void onScanResult(int callbackType, ScanResult result) {
       BluetoothDevice device = result.getDevice();
-
       if(device != null && device.getName() != null){
         invokeMethodUIThread("ScanResult", device);
       }
